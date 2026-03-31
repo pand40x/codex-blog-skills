@@ -1,6 +1,6 @@
 ---
 name: blog-generator
-description: Generate deep Turkish psychology blog posts with topic-gap analysis, strict structure validation, optional featured image generation, and end-to-end DB save; before save, pass the draft through blog-humanizer.
+description: Generate deep Turkish psychology blog posts with topic-gap analysis, strict structure validation, optional featured image generation, and editor-reviewed draft-first DB save; before save, pass the draft through blog-humanizer.
 ---
 
 # Blog Generator
@@ -10,7 +10,8 @@ Use this skill when the user wants a new Turkish psychology blog post, a topic r
 ## Default behavior
 
 - Treat "generate a blog" style requests as end-to-end by default.
-- End-to-end means: choose a coverage-aware topic, write the JSON, validate it, humanize the draft, re-validate if needed, generate a featured image if credentials exist, save to MongoDB, and report the saved slug or blocking error.
+- End-to-end means: choose a coverage-aware topic, write the JSON, validate it, humanize the draft, re-validate if needed, generate a featured image if credentials exist, save to MongoDB as a draft by default, and report the saved slug or blocking error.
+- Only publish immediately if the user explicitly asks for it and the content passes editorial quality checks; otherwise save as draft for review.
 - Only stop before image generation or DB save if the user explicitly asks for draft-only output, required credentials are missing, or the save step fails.
 
 ## Required flow
@@ -32,6 +33,7 @@ Use this skill when the user wants a new Turkish psychology blog post, a topic r
 - Let `dotenv`-based scripts load `.env` themselves.
 - If image generation succeeds, write `featuredImageUrl` back into the JSON before saving.
 - Do not let the humanizer remove required sections, disclaimer, or expert-note blocks.
+- If `tsx` commands fail in sandbox due to IPC or pipe permissions, rerun them with escalation instead of abandoning the workflow.
 
 ## Required credentials
 
@@ -41,7 +43,17 @@ Use this skill when the user wants a new Turkish psychology blog post, a topic r
 
 ## Content standard
 
+- Do not reuse the same article skeleton across consecutive posts; vary the body architecture while keeping safety requirements intact.
+- Choose one primary outline family per article and let the section flow reflect it:
+  - Belirti -> Mekanizma -> Mudahale
+  - Iliski Dongusu -> Duygusal Ihtiyac -> Onarim
+  - Vaka/Sahne -> Analiz -> Genelleme
+  - Mitler/Hatalar -> Gercek Cerceve -> Uygulama
+  - Gelisimsel Surec -> Risk Noktalari -> Destek Plani
+- Required sections may remain, but their placement and the body progression should vary by topic.
 - Do not write shallow self-help filler.
+- Do not invent first-hand clinical experience, years of practice, or personal client anecdotes.
+- Treat the output as an expert-reviewed draft, not a substitute for editorial review.
 - Explain mechanisms, not only advice.
 - Include at least 2 of these frameworks with real detail:
   - BDT
@@ -55,17 +67,18 @@ Use this skill when the user wants a new Turkish psychology blog post, a topic r
 
 - `title`: 50-80 chars
 - `summary`: 150-160 chars
-- `content`: 800-1500 words
+- `content`: 1000-1600 words
 - No H1 inside `content`
 - Exactly 2 expert-note blockquotes in this format:
   - `> 💡 **Uzman Notu:** ...`
 - Required H2 sections:
-  - `## Kendini Değerlendir`
-  - `## Sıkça Sorulan Sorular`
-  - `## Son Söz`
+- `## Kendini Değerlendir`
+- `## Sıkça Sorulan Sorular`
+- `## Son Söz`
 - `Kendini Değerlendir`: 3-5 numbered questions
 - FAQ: 3-5 `###` questions
 - If there is a case vignette, include `Bu bileşik bir kurgusal senaryodur`
+- Never imply that the writer personally treated the case or witnessed the events.
 - If medication or supplements are mentioned, include a doctor warning
 - Keep the legal disclaimer at the end:
 
